@@ -1,0 +1,37 @@
+console.log('Loading function');
+    // Load the AWS SDK
+    var AWS = require("aws-sdk");
+    
+    // Set up the code to call when the Lambda function is invoked
+    exports.handler = (event, context, callback) => {
+        //Take the message and put it in a variable
+        var eventText = event;
+        
+        // Write the string to the console
+        console.log("Message to send: " + eventText);
+        
+        // Create an SNS object
+        var sns = new AWS.SNS();
+        
+        // Populate the parameters for the publish operation
+        // - Message : the text of the message to send
+        // - TopicArn : the ARN of the Amazon SNS topic to which you want to publish 
+        const param = {
+           TopicArn: 'arn:aws:sns:us-west-2:237088717607:My_Iot_SNS_Topic',
+           Message: eventText,
+        };
+        if (eventText > 40) {
+    
+          // Publish a message to the specified topic
+          sns.publish(param, function (err, data) {
+             if (err){
+                console.log(err); // an error occurred
+              }else{
+                  console.log(data);
+              }           // successful response
+          });
+        /*response = sns.publish (
+        //TopicArn = 'arn:aws:sns:us-west-2:237088717607:My_Iot_SNS_Topic',
+        //Message = eventText
+          )*/
+        }
