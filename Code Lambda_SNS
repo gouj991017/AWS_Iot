@@ -5,10 +5,10 @@ console.log('Loading function');
     // Set up the code to call when the Lambda function is invoked
     exports.handler = (event, context, callback) => {
         //Take the message and put it in a variable
-        var eventText = event;
+        var eventText = JSON.parse(event.Temperature);
         
         // Write the string to the console
-        console.log("Message to send: " + eventText);
+        console.log("Message to send: " + eventText + "°C");
         
         // Create an SNS object
         var sns = new AWS.SNS();
@@ -18,10 +18,10 @@ console.log('Loading function');
         // - TopicArn : the ARN of the Amazon SNS topic to which you want to publish 
         const param = {
            TopicArn: 'arn:aws:sns:us-west-2:237088717607:My_Iot_SNS_Topic',
-           Message: eventText,
+           Message: (eventText + 273.15) + " kelvins"
         };
-        if (eventText > 40) {
-    
+        if (eventText > 40.0) {
+          console.log("Message to send: La température excède 40°C !");
           // Publish a message to the specified topic
           sns.publish(param, function (err, data) {
              if (err){
@@ -30,8 +30,7 @@ console.log('Loading function');
                   console.log(data);
               }           // successful response
           });
-        /*response = sns.publish (
-        //TopicArn = 'arn:aws:sns:us-west-2:237088717607:My_Iot_SNS_Topic',
-        //Message = eventText
-          )*/
         }
+        
+    };
+  
