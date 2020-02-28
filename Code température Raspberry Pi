@@ -1,4 +1,7 @@
 
+ * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
  * A copy of the License is located at
  *
@@ -45,8 +48,10 @@ function processTest(args) {
    var timeout;
    var count = 0;
    const minimumDelay = 250;
-   //var temp = require("pi-temperature");
+   var spawn = require('child_process').spawn;
+   var tempTampon;
    var temp;
+   
 
    if (args.testMode === 1) {
       device.subscribe('iot/topicTemp');
@@ -57,39 +62,38 @@ function processTest(args) {
       console.log('substituting ' + minimumDelay + 'ms delay for ' + args.delay + 'ms...');
    }
    
-   /*temp.measure(function(err, temp) {
-      temp = temp - temp%1;
-      if (err) console.error(err);
-      else console.log("It's " + temp + " celsius.");
-   });*/
-   
-   /*exec('cat /sys/class/thermal/thermal_zone0/temp');, (error, stdout, stderr) => {
-   if (error) {
-     console.error(`exec error: ${error}`);
-     return;
-   }
-   console.log(`stdout: ${stdout}`);
-   console.error(`stderr: ${stderr}`);
-   });*/
-   
+   tempTampon = spawn('cat', ['/sys/class/thermal/thermal_zone0/temp']);
+      
+      tempTampon.stdout.on('data', function(data) {
+              console.log('Result: ' + data/1000 + ' degrees Celcius');
+              temp = data/1000;
+   });
+    
    //On exécute la commande de récupérage (si si) de température
-   temp = exec('cat /sys/class/thermal/thermal_zone0/temp');
-   /*//On divise par 1000 pour convertir
-   temp = temp / 1000;
+   //temp = exec('cat /sys/class/thermal/thermal_zone0/temp');
+   //On divise par 1000 pour convertir
+   //temp = temp / 1000;
    //Un chiffre après la virgule ça suffit
-   temp = round(temp,1);*/
+   //temp = round(temp,1);
    
    
-   temp = temp / 1000 - (temp / 1000)%1;
+   //temp = temp / 1000 - (temp / 1000)%1;
    
    timeout = setInterval(function() {
       count++;
-
+      
+      tempTampon = spawn('cat', ['/sys/class/thermal/thermal_zone0/temp']);
+      
+      tempTampon.stdout.on('data', function(data) {
+              temp = data/1000;
+      });
+    
       if (args.testMode === 1) {
-         device.publish('iot/topicTemp', "54");
-         /*device.publish('iot/topicTemp', JSON.stringify({
+         //device.publish('iot/topicTemp', "54");
+         device.publish('iot/topicTemp', JSON.stringify({
+            Row: "0",
             Temperature: temp
-         }));*/
+         }));
       } else {
          device.publish('topic_1', JSON.stringify({
             mode2Process: count
