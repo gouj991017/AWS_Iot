@@ -2,6 +2,9 @@ console.log('Loading function');
     // Load the AWS SDK
     var AWS = require("aws-sdk");
     
+    // Set the region 
+    AWS.config.update({region: 'us-west-2'});
+    
     // Set up the code to call when the Lambda function is invoked
     exports.handler = (event, context, callback) => {
         //Take the message and put it in a variable
@@ -13,12 +16,35 @@ console.log('Loading function');
         // Create an SNS object
         var sns = new AWS.SNS();
         
+        // Create an DynamoDB object
+        var docClient = new AWS.DynamoDB({apiVersion: '2012-08-10'})
+        
+        var date = Date.now();
+        
+        var params = {
+          TableName: 'RaspPiTemp',
+          Item: {
+                'Temperature': {S: String(eventText) + " °C, " + String((eventText + 273.15)) + " kelvin"},
+                'timestamp': {S: String(date)}
+          }
+            
+        };
+        
+        docClient.putItem(params, function(err, data) {
+          if (err) {
+            console.log("Error", err);
+          } else {
+            
+            console.log("Success", data);
+          }
+        });
+        
         // Populate the parameters for the publish operation
         // - Message : the text of the message to send
         // - TopicArn : the ARN of the Amazon SNS topic to which you want to publish 
         const param = {
            TopicArn: 'arn:aws:sns:us-west-2:237088717607:My_Iot_SNS_Topic',
-           Message: (eventText + 273.15) + " kelvins"
+           Message: "ATTENTION, TEMPÉRATURE AU DESSUS DE 40 C. TEMPÉRATURE ACTUELLE: " + eventText + " °C" + " , TEMPÉRATURE EN KELVIN: " + (eventText + 273.15) + " kelvin"
         };
         if (eventText > 40.0) {
           console.log("Message to send: La température excède 40°C !");
